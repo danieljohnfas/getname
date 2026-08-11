@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   const ip = request.headers.get('cf-connecting-ip') ?? 'unknown'
 
   // ── Rate limiting ─────────────────────────────────────────────────────────
-  const rateKey = `gen2:${ip}`
+  const rateKey = `gen4:${ip}`
   const rate = await checkRateLimit(
     env.RATE_LIMIT_KV,
     rateKey,
@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
       body: new URLSearchParams({
         secret: env.TURNSTILE_SECRET_KEY,
         response: turnstileToken,
-        remoteip: ip,
       }).toString(),
     },
   )
