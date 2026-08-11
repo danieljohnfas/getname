@@ -5,8 +5,6 @@ import { identities } from '@/db/schema'
 import { generateCode, hashCode } from '@/lib/identity/generate'
 import { checkRateLimit, GENERATION_LIMIT } from '@/lib/ratelimit'
 
-
-
 export async function POST(request: NextRequest) {
   const { env } = await getCloudflareContext()
   const ip = request.headers.get('cf-connecting-ip') ?? 'unknown'
@@ -30,7 +28,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // ── Cloudflare Turnstile verification ────────────────────────────────────
+  // ── Cloudflare Turnstile verification ─────────────────────────────────────
   let body: { turnstileToken?: string } = {}
   try {
     body = await request.json()
@@ -44,12 +42,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing verification token.' }, { status: 400 })
   }
 
+  // IMPORTANT: Cloudflare siteverify requires application/x-www-form-urlencoded,
+  // NOT application/json. Sending JSON causes silent failure (success: false).
   const verifyResp = await fetch(
     'https://challenges.cloudflare.com/turnstile/v0/siteverify',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
         secret: env.TURNSTILE_SECRET_KEY,
         response: turnstileToken,
         remoteip: ip,
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     },
   )
 
-  const verifyData = (await verifyResp.json()) as { success: boolean }
+  const verifyData = (await verifyResp.json()) as { success: boolean; 'error-codes'?: string[] }
   if (!verifyData.success) {
     return NextResponse.json(
       { error: 'Verification failed. Please try again.' },
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // ── Generate code + hash + store ─────────────────────────────────────────
+  // ── Generate code + hash + store ──────────────────────────────────────────
   // SECURITY: the plaintext code is returned ONCE to the client and never stored.
   const plainCode = generateCode()
   const codeHash = await hashCode(plainCode, env.SERVER_PEPPER)
@@ -74,7 +74,5 @@ export async function POST(request: NextRequest) {
   await db.insert(identities).values({ code_hash: codeHash })
 
   // Return the plaintext code — this is the only time it will ever be shown.
-  // It is not stored anywhere in the database.
   return NextResponse.json({ code: plainCode }, { status: 201 })
 }
-

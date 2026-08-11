@@ -6,7 +6,7 @@ const ADJECTIVES = [
   'Quiet', 'Swift', 'Calm', 'Bright', 'Dark', 'Wild', 'Soft', 'Bold',
   'Pale', 'Deep', 'Lone', 'Still', 'Sharp', 'Warm', 'Cold', 'Dry',
   'Vast', 'Slow', 'Keen', 'Mild', 'Free', 'Odd', 'Rare', 'Firm',
-  'Vast', 'Grim', 'Fair', 'Bare', 'Dusk', 'Dawn',
+  'Grim', 'Fair', 'Bare', 'Dusk', 'Dawn', 'Grey',
 ]
 
 const ANIMALS = [
@@ -18,8 +18,11 @@ const ANIMALS = [
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Convert a hex string like "SERVER_PEPPER" env var into a Uint8Array */
+/** Convert a hex string (SERVER_PEPPER env var) into a Uint8Array */
 function hexToBytes(hex: string): Uint8Array {
+  if (hex.length % 2 !== 0) {
+    throw new Error(`Invalid hex pepper: must have even length, got ${hex.length}`)
+  }
   const bytes = new Uint8Array(hex.length / 2)
   for (let i = 0; i < bytes.length; i++) {
     bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16)
@@ -63,7 +66,7 @@ async function hmacHex(key: CryptoKey, message: string): Promise<string> {
  * Format: word1-word2-word3-word4-word5-NN
  * Example: amber-falcon-brook-marsh-quill-92
  *
- * Uses crypto.getRandomValues — cryptographically secure.
+ * Uses crypto.getRandomValues — cryptographically secure and synchronous.
  * ~71 bits of entropy. Effectively unguessable.
  */
 export function generateCode(): string {

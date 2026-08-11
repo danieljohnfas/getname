@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, primaryKey } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, primaryKey, unique } from 'drizzle-orm/sqlite-core'
 
 // ─── identities ────────────────────────────────────────────────────────────
 // One row per anonymous user. The code_hash is the only way to look them up.
@@ -98,7 +98,10 @@ export const reports = sqliteTable('reports', {
   created_at: integer('created_at', { mode: 'number' })
     .notNull()
     .$defaultFn(() => Date.now()),
-})
+},
+(t) => ({
+  uniqReport: unique().on(t.reporter_id, t.post_id),
+}))
 
 export type Identity = typeof identities.$inferSelect
 export type Space = typeof spaces.$inferSelect

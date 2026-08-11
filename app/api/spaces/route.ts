@@ -2,11 +2,13 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { desc, eq, sql } from 'drizzle-orm'
 import { getDb } from '@/db/index'
-import { spaces, memberships, posts } from '@/db/schema'
+import { spaces, memberships } from '@/db/schema'
 import { getIronSession, getSessionOptions } from '@/lib/auth/session'
 import type { SessionData } from '@/lib/auth/session'
+import { checkRateLimit } from '@/lib/ratelimit'
 
-
+// ── Rate limit config ─────────────────────────────────────────────────────────
+const SPACES_CREATE_LIMIT = { limit: 5, windowSeconds: 3600 } // 5 spaces/hour per IP
 
 // ── GET /api/spaces — list all spaces ────────────────────────────────────────
 
@@ -36,6 +38,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const { env } = await getCloudflareContext()
+  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown'
 
   // Auth check
   const session = await getIronSession<SessionData>(
@@ -45,6 +48,20 @@ export async function POST(request: NextRequest) {
   )
   if (!session.identityId) {
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
+  }
+
+  // Rate limit space creation
+  const rate = await checkRateLimit(
+    env.RATE_LIMIT_KV,
+    `spaces:${ip}`,
+    SPACES_CREATE_LIMIT.limit,
+    SPACES_CREATE_LIMIT.windowSeconds,
+  )
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Too many spaces created. Please try again later.' },
+      { status: 429, headers: { 'Retry-After': String(rate.resetInSeconds) } },
+    )
   }
 
   let body: { title?: string; slug?: string; description?: string } = {}
@@ -57,6 +74,12 @@ export async function POST(request: NextRequest) {
   const { title, description = '' } = body
   if (!title || title.trim().length < 2) {
     return NextResponse.json({ error: 'Title must be at least 2 characters.' }, { status: 400 })
+  }
+  if (title.trim().length > 80) {
+    return NextResponse.json({ error: 'Title must be 80 characters or fewer.' }, { status: 400 })
+  }
+  if (description.trim().length > 300) {
+    return NextResponse.json({ error: 'Description must be 300 characters or fewer.' }, { status: 400 })
   }
 
   // Generate slug from title if not provided
@@ -106,4 +129,3 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ space }, { status: 201 })
 }
-

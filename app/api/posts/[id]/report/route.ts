@@ -5,8 +5,10 @@ import { getDb } from '@/db/index'
 import { posts, reports } from '@/db/schema'
 import { getIronSession, getSessionOptions } from '@/lib/auth/session'
 import type { SessionData } from '@/lib/auth/session'
+import { checkRateLimit } from '@/lib/ratelimit'
 
-
+// 10 reports per hour per IP
+const REPORT_LIMIT = { limit: 10, windowSeconds: 3600 }
 
 export async function POST(
   request: NextRequest,
@@ -14,6 +16,7 @@ export async function POST(
 ) {
   const { env } = await getCloudflareContext()
   const { id: postId } = await params
+  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown'
 
   // Auth
   const session = await getIronSession<SessionData>(
@@ -23,6 +26,20 @@ export async function POST(
   )
   if (!session.identityId) {
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
+  }
+
+  // Rate limit
+  const rate = await checkRateLimit(
+    env.RATE_LIMIT_KV,
+    `report:${ip}`,
+    REPORT_LIMIT.limit,
+    REPORT_LIMIT.windowSeconds,
+  )
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Too many reports submitted. Please try again later.' },
+      { status: 429, headers: { 'Retry-After': String(rate.resetInSeconds) } },
+    )
   }
 
   const db = getDb(env.DB)
@@ -52,12 +69,22 @@ export async function POST(
       { status: 400 },
     )
   }
+  if (reason.trim().length > 500) {
+    return NextResponse.json(
+      { error: 'Reason must be 500 characters or fewer.' },
+      { status: 400 },
+    )
+  }
 
-  await db.insert(reports).values({
-    post_id: postId,
-    reporter_id: session.identityId,
-    reason: reason.trim(),
-  })
+  // Insert — if same user already reported this post, ignore duplicate
+  await db
+    .insert(reports)
+    .values({
+      post_id: postId,
+      reporter_id: session.identityId,
+      reason: reason.trim(),
+    })
+    .onConflictDoNothing()
 
   return NextResponse.json({ ok: true }, { status: 201 })
 }

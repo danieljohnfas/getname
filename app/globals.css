@@ -407,7 +407,15 @@ textarea.input { resize: vertical; min-height: 100px; }
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
 .w-full { width: 100%; }
-.sr-only { @extend .visually-hidden; }
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
 
 .error-msg {
   color: #e57373;

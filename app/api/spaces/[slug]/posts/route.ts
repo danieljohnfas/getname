@@ -1,13 +1,15 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
-import { and, asc, eq, isNull } from 'drizzle-orm'
+import { and, asc, eq, isNull, lt } from 'drizzle-orm'
 import { getDb } from '@/db/index'
 import { spaces, posts, memberships } from '@/db/schema'
 import { deriveSpacePseudonym } from '@/lib/identity/generate'
 import { getIronSession, getSessionOptions } from '@/lib/auth/session'
 import type { SessionData } from '@/lib/auth/session'
+import { checkRateLimit } from '@/lib/ratelimit'
 
-
+// 60 posts per hour per IP
+const POST_LIMIT = { limit: 60, windowSeconds: 3600 }
 
 // ── GET /api/spaces/[slug]/posts ──────────────────────────────────────────────
 
@@ -38,23 +40,31 @@ export async function GET(
     : Date.now()
 
   const rawPosts = await db
-    .select()
+    .select({
+      id: posts.id,
+      body: posts.body,
+      created_at: posts.created_at,
+      parent_post_id: posts.parent_post_id,
+      space_id: posts.space_id,
+      identity_id: posts.identity_id, // needed for pseudonym derivation only
+    })
     .from(posts)
     .where(
       and(
         eq(posts.space_id, space.id),
         isNull(posts.deleted_at),
+        lt(posts.created_at, before), // ← cursor-based pagination now actually applied
       ),
     )
     .orderBy(asc(posts.created_at))
     .limit(limit)
 
-  // Derive per-space pseudonym for each author
+  // Derive per-space pseudonym and strip identity_id from response
   const postsWithNames = await Promise.all(
-    rawPosts.map(async (post) => ({
+    rawPosts.map(async ({ identity_id, ...post }) => ({
       ...post,
       author_name: await deriveSpacePseudonym(
-        post.identity_id,
+        identity_id,
         space.id,
         env.SERVER_PEPPER,
       ),
@@ -72,6 +82,7 @@ export async function POST(
 ) {
   const { env } = await getCloudflareContext()
   const { slug } = await params
+  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown'
 
   // Auth
   const response = new NextResponse()
@@ -82,6 +93,20 @@ export async function POST(
   )
   if (!session.identityId) {
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
+  }
+
+  // Rate limit post creation
+  const rate = await checkRateLimit(
+    env.RATE_LIMIT_KV,
+    `post:${ip}`,
+    POST_LIMIT.limit,
+    POST_LIMIT.windowSeconds,
+  )
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Too many posts. Please slow down.' },
+      { status: 429, headers: { 'Retry-After': String(rate.resetInSeconds) } },
+    )
   }
 
   const db = getDb(env.DB)
@@ -154,5 +179,8 @@ export async function POST(
     env.SERVER_PEPPER,
   )
 
-  return NextResponse.json({ post: { ...newPost, author_name } }, { status: 201 })
+  // Strip identity_id from response — clients should never see raw identity IDs
+  const { identity_id: _omit, ...postForClient } = newPost
+
+  return NextResponse.json({ post: { ...postForClient, author_name } }, { status: 201 })
 }

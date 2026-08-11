@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Metadata } from 'next'
+import Link from 'next/link'
 
 // Animated code fragment for the hero — cycles through fake codes
 const SAMPLE_CODES = [
@@ -67,22 +67,22 @@ export default function LandingPage() {
       </h1>
 
       <p className="text-dim mt-4" style={{ maxWidth: '42ch', margin: '1rem auto 0' }}>
-        Anonboard gives you a unique code instead of an account. Keep it safe — it's
+        Anonboard gives you a unique code instead of an account. Keep it safe — it&apos;s
         the only way back in. No email. No password. No profile.
       </p>
 
       <div className="landing-actions">
-        <a href="/onboarding" className="btn btn-primary">
+        <Link href="/onboarding" className="btn btn-primary">
           Get my code
-        </a>
-        <a href="/login" className="btn btn-ghost">
+        </Link>
+        <Link href="/login" className="btn btn-ghost">
           I have a code
-        </a>
+        </Link>
       </div>
 
       <p className="text-xs text-dim mt-8">
         By continuing you agree to the{' '}
-        <a href="/terms">Acceptable Use Policy</a>.
+        <Link href="/terms">Acceptable Use Policy</Link>.
       </p>
     </main>
   )

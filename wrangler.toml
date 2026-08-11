@@ -27,6 +27,6 @@ id = "e7d850f45a6c4c50878b517c9b09c778"
 NEXT_PUBLIC_TURNSTILE_SITE_KEY = "0x4AAAAAAEM14nlnHzH8re7I"
 
 # ── Secrets (set via CLI, never committed) ────────────────────────────────────
-# wrangler pages secret put SERVER_PEPPER
-# wrangler pages secret put SESSION_SECRET
-# wrangler pages secret put TURNSTILE_SECRET_KEY
+# wrangler secret put SERVER_PEPPER
+# wrangler secret put SESSION_SECRET
+# wrangler secret put TURNSTILE_SECRET_KEY

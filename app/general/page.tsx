@@ -2,22 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Sidebar } from '@/components/Sidebar'
-
-interface Post {
-  id: string
-  body: string
-  author_name: string
-  created_at: number
-  parent_post_id: string | null
-}
-
-function timeAgo(ts: number) {
-  const diff = Date.now() - ts
-  if (diff < 60000) return 'just now'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
-  return `${Math.floor(diff / 86400000)}d ago`
-}
+import type { Post } from '@/lib/types'
+import { timeAgo } from '@/lib/utils'
 
 export default function GeneralPage() {
   const [posts, setPosts] = useState<Post[]>([])
@@ -27,6 +13,8 @@ export default function GeneralPage() {
   const [submitting, setSubmitting] = useState(false)
   const [reportingId, setReportingId] = useState<string | null>(null)
   const [reportReason, setReportReason] = useState('')
+  const [reportError, setReportError] = useState<string | null>(null)
+  const [reportSubmitting, setReportSubmitting] = useState(false)
   const composerRef = useRef<HTMLTextAreaElement>(null)
 
   async function loadPosts() {
@@ -73,15 +61,30 @@ export default function GeneralPage() {
   }
 
   async function handleReport(postId: string) {
-    if (!reportReason.trim()) return
-    await fetch(`/api/posts/${postId}/report`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ reason: reportReason }),
-    })
-    setReportingId(null)
-    setReportReason('')
+    if (!reportReason.trim() || reportSubmitting) return
+    setReportSubmitting(true)
+    setReportError(null)
+
+    try {
+      const res = await fetch(`/api/posts/${postId}/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ reason: reportReason }),
+      })
+
+      if (res.ok) {
+        setReportingId(null)
+        setReportReason('')
+      } else {
+        const data = await res.json() as { error?: string }
+        setReportError(data.error ?? 'Failed to submit report.')
+      }
+    } catch {
+      setReportError('Network error. Please try again.')
+    } finally {
+      setReportSubmitting(false)
+    }
   }
 
   return (
@@ -148,27 +151,35 @@ export default function GeneralPage() {
                 </button>
                 <button
                   className="btn btn-ghost btn-sm"
-                  onClick={() => { setReportingId(post.id); setReportReason('') }}
+                  onClick={() => { setReportingId(post.id); setReportReason(''); setReportError(null) }}
                 >
                   Report
                 </button>
               </div>
 
               {reportingId === post.id && (
-                <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <input
-                    className="input"
-                    style={{ flex: 1, minWidth: 200 }}
-                    placeholder="Reason for reporting…"
-                    value={reportReason}
-                    onChange={(e) => setReportReason(e.target.value)}
-                  />
-                  <button className="btn btn-danger btn-sm" onClick={() => handleReport(post.id)}>
-                    Submit report
-                  </button>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setReportingId(null)}>
-                    Cancel
-                  </button>
+                <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <input
+                      className="input"
+                      style={{ flex: 1, minWidth: 200 }}
+                      placeholder="Reason for reporting…"
+                      value={reportReason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                      disabled={reportSubmitting}
+                    />
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleReport(post.id)}
+                      disabled={reportSubmitting || !reportReason.trim()}
+                    >
+                      {reportSubmitting ? 'Submitting…' : 'Submit report'}
+                    </button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => setReportingId(null)}>
+                      Cancel
+                    </button>
+                  </div>
+                  {reportError && <p className="error-msg">{reportError}</p>}
                 </div>
               )}
             </article>
