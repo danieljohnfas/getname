@@ -1,3 +1,5 @@
+import type { KVNamespace } from '@cloudflare/workers-types'
+
 /**
  * KV-based sliding window rate limiter.
  *

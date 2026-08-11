@@ -1,17 +1,15 @@
 /**
- * EFF Long Wordlist — 7,776 words for diceware passphrase generation.
+ * 7776-word EFF Large Wordlist
  * Source: https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt
  *
- * The eff-diceware-passphrase package exports an object keyed by 5-digit dice
- * rolls (e.g. "11111" → "abacus"). We extract just the word values here.
+ * Extracted to JSON to avoid edge runtime issues with native node modules.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const effList = require('eff-diceware-passphrase') as Record<string, string>
+import effWords from './eff_words.json'
 
-export const WORDLIST: string[] = Object.values(effList)
+export const WORDLIST: string[] = effWords as string[]
 
-// Verify at import time (fails fast in tests if package structure changes)
-if (WORDLIST.length < 7000) {
-  throw new Error(`EFF wordlist too short: ${WORDLIST.length} words. Check eff-diceware-passphrase package.`)
+// Verify at import time (fails fast in tests if something goes wrong)
+if (WORDLIST.length !== 7776) {
+  throw new Error(`EFF wordlist incorrect length: ${WORDLIST.length} words.`)
 }

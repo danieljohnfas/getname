@@ -3,24 +3,42 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
+    "pages:build": "opennextjs-cloudflare build",
+    "pages:preview": "npm run pages:build && wrangler pages dev",
+    "pages:deploy": "npm run pages:build && wrangler deploy",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 execute DB --local --file=drizzle/0000_init.sql",
+    "db:seed:local": "wrangler d1 execute DB --local --file=drizzle/0001_seed_general.sql",
+    "db:migrate:remote": "wrangler d1 execute DB --file=drizzle/0000_init.sql",
+    "db:seed:remote": "wrangler d1 execute DB --file=drizzle/0001_seed_general.sql",
+    "test": "vitest run --config vitest.config.mts",
+    "test:watch": "vitest --config vitest.config.mts",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
-    "next": "16.3.0",
+    "@marsidev/react-turnstile": "^1.5.5",
+    "@opennextjs/cloudflare": "^1.20.2",
+    "drizzle-orm": "^0.45.2",
+    "iron-session": "^8.0.4",
+    "next": "15.5.21",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260811.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.120.1"
   }
 }

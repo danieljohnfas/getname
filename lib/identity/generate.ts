@@ -42,7 +42,7 @@ async function importPepperKey(pepper: string): Promise<CryptoKey> {
 
   return crypto.subtle.importKey(
     'raw',
-    pepperBytes,
+    pepperBytes as BufferSource,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign'],
