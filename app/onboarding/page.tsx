@@ -126,7 +126,7 @@ export default function OnboardingPage() {
               siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA'}
               onSuccess={handleTurnstileSuccess}
               onError={handleTurnstileError}
-              onExpire={() => setTurnstileToken(null)}
+              onExpire={() => { setTurnstileToken(null); turnstileRef.current?.reset() }}
               options={{ theme: 'dark' }}
             />
           )}

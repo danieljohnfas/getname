@@ -58,8 +58,16 @@ export async function POST(request: NextRequest) {
 
   const verifyData = (await verifyResp.json()) as { success: boolean; 'error-codes'?: string[] }
   if (!verifyData.success) {
+    const codes = verifyData['error-codes'] ?? []
+    const friendlyError = codes.includes('timeout-or-duplicate')
+      ? 'Verification expired or was already used. Please complete the check again.'
+      : codes.includes('invalid-input-response')
+        ? 'Verification token was invalid. Please complete the check again.'
+        : codes.includes('missing-input-response')
+          ? 'Verification token was missing. Please complete the check again.'
+          : 'Verification failed. Please try again.'
     return NextResponse.json(
-      { error: `Verification failed (${(verifyData['error-codes'] || []).join(', ')}). Please try again.` },
+      { error: friendlyError },
       { status: 400 },
     )
   }
