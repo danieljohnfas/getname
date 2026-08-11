@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Turnstile } from '@marsidev/react-turnstile'
+import type { TurnstileInstance } from '@marsidev/react-turnstile'
 
 type Step = 'verify' | 'reveal'
 
@@ -17,6 +18,7 @@ export default function OnboardingPage() {
   const [displayCode, setDisplayCode] = useState('')
   const [typingDone, setTypingDone] = useState(false)
   const codeBoxRef = useRef<HTMLDivElement>(null)
+  const turnstileRef = useRef<TurnstileInstance>(null)
 
   // Guard: track whether a generation request is already in-flight
   const generatingRef = useRef(false)
@@ -53,6 +55,8 @@ export default function OnboardingPage() {
         setError(data.error ?? 'Something went wrong. Please refresh and try again.')
         setLoading(false)
         generatingRef.current = false
+        setTurnstileToken(null)
+        turnstileRef.current?.reset()
         return
       }
 
@@ -118,6 +122,7 @@ export default function OnboardingPage() {
           {/* Turnstile always visible — just verifies humanity */}
           {!loading && (
             <Turnstile
+              ref={turnstileRef}
               siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA'}
               onSuccess={handleTurnstileSuccess}
               onError={handleTurnstileError}

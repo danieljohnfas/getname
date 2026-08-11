@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   const ip = request.headers.get('cf-connecting-ip') ?? 'unknown'
 
   // ── Rate limiting ─────────────────────────────────────────────────────────
-  const rateKey = `gen:${ip}`
+  const rateKey = `gen2:${ip}`
   const rate = await checkRateLimit(
     env.RATE_LIMIT_KV,
     rateKey,
@@ -53,14 +53,14 @@ export async function POST(request: NextRequest) {
         secret: env.TURNSTILE_SECRET_KEY,
         response: turnstileToken,
         remoteip: ip,
-      }),
+      }).toString(),
     },
   )
 
   const verifyData = (await verifyResp.json()) as { success: boolean; 'error-codes'?: string[] }
   if (!verifyData.success) {
     return NextResponse.json(
-      { error: 'Verification failed. Please try again.' },
+      { error: `Verification failed (${(verifyData['error-codes'] || []).join(', ')}). Please try again.` },
       { status: 400 },
     )
   }
