@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Turnstile } from '@marsidev/react-turnstile'
 
-type Step = 'verify' | 'reveal' | 'confirm'
+type Step = 'verify' | 'reveal'
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -18,9 +18,24 @@ export default function OnboardingPage() {
   const [typingDone, setTypingDone] = useState(false)
   const codeBoxRef = useRef<HTMLDivElement>(null)
 
-  // Trigger code generation once Turnstile token is received
-  async function handleTurnstileSuccess(token: string) {
+  // Guard: track whether a generation request is already in-flight
+  const generatingRef = useRef(false)
+
+  // Turnstile verified — store token but DON'T auto-generate yet.
+  // The user clicks the button to actually generate.
+  function handleTurnstileSuccess(token: string) {
     setTurnstileToken(token)
+    setError(null)
+  }
+
+  function handleTurnstileError() {
+    setTurnstileToken(null)
+    setError('Verification failed. Please refresh and try again.')
+  }
+
+  async function handleGenerate() {
+    if (!turnstileToken || generatingRef.current) return
+    generatingRef.current = true
     setLoading(true)
     setError(null)
 
@@ -28,7 +43,7 @@ export default function OnboardingPage() {
       const res = await fetch('/api/generate-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ turnstileToken: token }),
+        body: JSON.stringify({ turnstileToken }),
         credentials: 'include',
       })
 
@@ -37,44 +52,38 @@ export default function OnboardingPage() {
       if (!res.ok || !data.code) {
         setError(data.error ?? 'Something went wrong. Please refresh and try again.')
         setLoading(false)
+        generatingRef.current = false
         return
       }
 
+      // Start the type-in animation
       setCode(data.code)
       setStep('reveal')
+      setDisplayCode('')
+      setTypingDone(false)
+
+      let i = 0
+      const id = setInterval(() => {
+        i++
+        setDisplayCode(data.code!.slice(0, i))
+        if (i >= data.code!.length) {
+          clearInterval(id)
+          setTypingDone(true)
+          codeBoxRef.current?.classList.add('pulse-once')
+        }
+      }, 40)
     } catch {
       setError('Network error. Please check your connection and try again.')
       setLoading(false)
+      generatingRef.current = false
     }
   }
-
-  // Type-in animation for the code reveal
-  useEffect(() => {
-    if (step !== 'reveal' || !code) return
-    let i = 0
-    setDisplayCode('')
-    setTypingDone(false)
-
-    const id = setInterval(() => {
-      i++
-      setDisplayCode(code.slice(0, i))
-      if (i >= code.length) {
-        clearInterval(id)
-        setTypingDone(true)
-        // Pulse the box once
-        codeBoxRef.current?.classList.add('pulse-once')
-      }
-    }, 40)
-
-    return () => clearInterval(id)
-  }, [step, code])
 
   async function handleConfirm() {
     if (!confirmed || !code) return
     setLoading(true)
 
     try {
-      // Log in immediately with the generated code
       const res = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -106,17 +115,31 @@ export default function OnboardingPage() {
             You&apos;ll need to save it — there&apos;s no recovery.
           </p>
 
-          {loading && (
-            <p className="text-dim">Generating your code…</p>
-          )}
-
+          {/* Turnstile always visible — just verifies humanity */}
           {!loading && (
             <Turnstile
               siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA'}
               onSuccess={handleTurnstileSuccess}
-              onError={() => setError('Verification failed. Please refresh and try again.')}
+              onError={handleTurnstileError}
+              onExpire={() => setTurnstileToken(null)}
               options={{ theme: 'dark' }}
             />
+          )}
+
+          {/* Generate button — only enabled once Turnstile token exists */}
+          {!loading && (
+            <button
+              className="btn btn-primary"
+              style={{ marginTop: '1.5rem' }}
+              onClick={handleGenerate}
+              disabled={!turnstileToken}
+            >
+              {turnstileToken ? 'Generate my code' : 'Complete the check above…'}
+            </button>
+          )}
+
+          {loading && (
+            <p className="text-dim" style={{ marginTop: '1.5rem' }}>Generating your code…</p>
           )}
 
           {error && <p className="error-msg mt-4">{error}</p>}
