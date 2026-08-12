@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Hash + lookup ─────────────────────────────────────────────────────────
-  const codeHash = await hashCode(code, env.SERVER_PEPPER)
+  const serverPepper = (env.SERVER_PEPPER || process.env.SERVER_PEPPER) as string;
+  const codeHash = await hashCode(code, serverPepper)
   const db = getDb(env.DB)
 
   const [identity] = await db
@@ -67,7 +68,8 @@ export async function POST(request: NextRequest) {
 
   // ── Set session cookie ────────────────────────────────────────────────────
   const response = NextResponse.json({ ok: true }, { status: 200 })
-  const session = await getIronSession<SessionData>(request, response, getSessionOptions(env.SESSION_SECRET))
+  const sessionSecret = (env.SESSION_SECRET || process.env.SESSION_SECRET) as string;
+  const session = await getIronSession<SessionData>(request, response, getSessionOptions(sessionSecret))
   session.identityId = identity.id
   await session.save()
 

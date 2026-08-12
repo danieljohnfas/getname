@@ -44,19 +44,24 @@ export async function POST(request: NextRequest) {
 
   // IMPORTANT: Cloudflare siteverify requires application/x-www-form-urlencoded,
   // NOT application/json. Sending JSON causes silent failure (success: false).
+  
+  const turnstileSecret = env.TURNSTILE_SECRET_KEY || process.env.TURNSTILE_SECRET_KEY;
+  console.log('TURNSTILE SECRET IS:', turnstileSecret ? `SET (length ${turnstileSecret.length})` : 'UNDEFINED');
+
   const verifyResp = await fetch(
     'https://challenges.cloudflare.com/turnstile/v0/siteverify',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        secret: env.TURNSTILE_SECRET_KEY,
+        secret: turnstileSecret || '',
         response: turnstileToken,
       }).toString(),
     },
   )
 
   const verifyData = (await verifyResp.json()) as { success: boolean; 'error-codes'?: string[] }
+  console.log('Turnstile response:', verifyData)
   if (!verifyData.success) {
     const codes = verifyData['error-codes'] ?? []
     const friendlyError = codes.includes('timeout-or-duplicate')
@@ -65,7 +70,9 @@ export async function POST(request: NextRequest) {
         ? 'Verification token was invalid. Please complete the check again.'
         : codes.includes('missing-input-response')
           ? 'Verification token was missing. Please complete the check again.'
-          : 'Verification failed. Please try again.'
+          : codes.includes('invalid-input-secret')
+            ? 'Server configuration error: Invalid Turnstile secret key.'
+            : 'Verification failed. Please try again.'
     return NextResponse.json(
       { error: friendlyError },
       { status: 400 },
@@ -75,7 +82,8 @@ export async function POST(request: NextRequest) {
   // ── Generate code + hash + store ──────────────────────────────────────────
   // SECURITY: the plaintext code is returned ONCE to the client and never stored.
   const plainCode = generateCode()
-  const codeHash = await hashCode(plainCode, env.SERVER_PEPPER)
+  const serverPepper = (env.SERVER_PEPPER || process.env.SERVER_PEPPER) as string;
+  const codeHash = await hashCode(plainCode, serverPepper)
 
   const db = getDb(env.DB)
   await db.insert(identities).values({ code_hash: codeHash })

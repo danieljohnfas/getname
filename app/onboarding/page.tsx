@@ -65,6 +65,7 @@ export default function OnboardingPage() {
       setStep('reveal')
       setDisplayCode('')
       setTypingDone(false)
+      setLoading(false)
 
       let i = 0
       const id = setInterval(() => {
