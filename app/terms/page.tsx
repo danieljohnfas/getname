@@ -1,7 +1,11 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Acceptable Use Policy — Anonboard',
+  title: 'Acceptable Use Policy',
+  description:
+    'Read the Anonboard Acceptable Use Policy — what content is prohibited, how to report violations, and how enforcement works on our anonymous discussion platform.',
+  alternates: { canonical: '/terms' },
+  robots: { index: true, follow: false },
 }
 
 export default function TermsPage() {

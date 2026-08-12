@@ -272,6 +272,25 @@ textarea.input { resize: vertical; min-height: 100px; }
   margin-bottom: 0.5rem;
 }
 
+.sidebar-powered-by {
+  display: block;
+  margin-top: 0.75rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  color: var(--dim);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  opacity: 0.5;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.sidebar-powered-by:hover {
+  opacity: 1;
+  color: var(--signal);
+  text-decoration: none;
+}
+
 /* ─── Components: Composer ───────────────────────────────────────────────── */
 .composer {
   margin-bottom: 1.5rem;
