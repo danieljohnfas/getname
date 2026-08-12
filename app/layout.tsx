@@ -40,20 +40,11 @@ export const metadata: Metadata = {
     siteName: 'Anonboard',
     title: TITLE,
     description: DESCRIPTION,
-    images: [
-      {
-        url: `${SITE_URL}/opengraph-image.png`,
-        width: 1200,
-        height: 630,
-        alt: 'Anonboard — Your voice, no trace.',
-      },
-    ],
   },
   twitter: {
-    card: 'summary_large_image',
+    card: 'summary',
     title: TITLE,
     description: DESCRIPTION,
-    images: [`${SITE_URL}/opengraph-image.png`],
     creator: '@anonboard',
   },
 }
