@@ -1,7 +1,12 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  // OpenNext for Cloudflare handles the runtime
+  // OpenNext for Cloudflare handles the runtime — file tracing is not needed.
+  // Excluding all files skips the "Collecting build traces" step that
+  // hangs indefinitely on Windows (known Next.js 15 + Windows issue).
+  outputFileTracingExcludes: {
+    '*': ['**'],
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
