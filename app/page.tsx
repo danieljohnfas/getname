@@ -53,7 +53,8 @@ export default function LandingPage() {
   // If they already have a session, redirect to /general
   useEffect(() => {
     fetch('/api/me', { credentials: 'include' })
-      .then((r) => { if (r.ok) router.replace('/general') })
+      .then((r) => r.json())
+      .then((data) => { if (data.authenticated) router.replace('/general') })
       .catch(() => {})
   }, [router])
 

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   )
 
   if (!session.identityId) {
-    return NextResponse.json({ authenticated: false }, { status: 401 })
+    return NextResponse.json({ authenticated: false }, { status: 200 })
   }
 
   return NextResponse.json({ authenticated: true, identityId: session.identityId })
