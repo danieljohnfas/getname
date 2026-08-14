@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
-
 /* ─── Design Tokens ──────────────────────────────────────────────────────── */
 :root {
   --ink: #0E0F11;
@@ -13,9 +11,7 @@
   --signal-glow: rgba(91, 106, 208, 0.15);
   --border: rgba(107, 114, 128, 0.2);
   --radius: 6px;
-  --font-display: 'DM Serif Display', Georgia, serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  /* font families are injected via layout.tsx */
 }
 
 /* ─── Reset & Base ───────────────────────────────────────────────────────── */
