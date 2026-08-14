@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "pages:build": "opennextjs-cloudflare",
+    "pages:build": "opennextjs-cloudflare build",
     "pages:preview": "npm run pages:build && wrangler pages dev",
     "pages:deploy": "npm run pages:build && wrangler deploy",
     "db:generate": "drizzle-kit generate",
@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@marsidev/react-turnstile": "^1.5.5",
-    "@opennextjs/cloudflare": "^0.3.0",
+    "@opennextjs/cloudflare": "^1.10.0",
     "drizzle-orm": "^0.45.2",
     "iron-session": "^8.0.4",
     "next": "14.2.15",
