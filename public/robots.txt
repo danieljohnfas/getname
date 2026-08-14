@@ -3,6 +3,7 @@ Allow: /
 Allow: /terms
 Allow: /onboarding
 Allow: /login
+Allow: /api/me
 Disallow: /general
 Disallow: /spaces
 Disallow: /api/
