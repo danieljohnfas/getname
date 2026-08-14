@@ -40,5 +40,8 @@
     "typescript": "^5",
     "vitest": "^4.1.10",
     "wrangler": "^4.120.1"
+  },
+  "overrides": {
+    "@aws-sdk/credential-provider-ini": "3.973.13"
   }
 }
