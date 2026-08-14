@@ -25,6 +25,7 @@ id = "e7d850f45a6c4c50878b517c9b09c778"
 # ── Public env vars (safe to commit) ─────────────────────────────────────────
 [vars]
 NEXT_PUBLIC_TURNSTILE_SITE_KEY = "0x4AAAAAAEM14nlnHzH8re7I"
+NEXT_PUBLIC_SITE_URL = "https://getnyash.com"
 
 # ── Secrets (set via CLI, never committed) ────────────────────────────────────
 # wrangler secret put SERVER_PEPPER
