@@ -1,31 +1,33 @@
 import type { Metadata } from 'next'
 import './globals.css'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://anonboard.app'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://getnyash.com'
 
-const TITLE = 'Anonboard — Anonymous Discussions'
+const TITLE = 'GetNyash — Private Discussions'
 const DESCRIPTION =
-  'Discuss anything anonymously. No email, no username — just a passphrase code that is yours alone. Join spaces, post freely, leave no trace.'
+  'Discuss anything privately. No email, no username — just a unique code that is yours alone. Join spaces, post freely, and leave no trace on GetNyash.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: TITLE,
-    template: '%s — Anonboard',
+    template: '%s — GetNyash',
   },
   description: DESCRIPTION,
   keywords: [
-    'anonymous forum',
-    'anonymous discussion',
-    'no account chat',
+    'getnyash',
+    'nyash',
+    'private discussions',
     'private forum',
-    'anonymous Q&A',
-    'no email forum',
+    'anonymous chat',
+    'secure forum',
+    'no account chat',
+    'private community',
     'anonymous feedback',
-    'privacy-first forum',
+    'safe space',
   ],
-  authors: [{ name: 'Anonboard' }],
-  creator: 'Anonboard',
+  authors: [{ name: 'GetNyash' }],
+  creator: 'GetNyash',
   robots: {
     index: true,
     follow: true,
@@ -37,7 +39,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     url: SITE_URL,
-    siteName: 'Anonboard',
+    siteName: 'GetNyash',
     title: TITLE,
     description: DESCRIPTION,
   },
@@ -45,19 +47,19 @@ export const metadata: Metadata = {
     card: 'summary',
     title: TITLE,
     description: DESCRIPTION,
-    creator: '@anonboard',
+    creator: '@getnyash',
   },
 }
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  name: 'Anonboard',
+  name: 'GetNyash',
   url: SITE_URL,
   description: DESCRIPTION,
   potentialAction: {
     '@type': 'Action',
-    name: 'Get anonymous access code',
+    name: 'Get private access code',
     target: `${SITE_URL}/onboarding`,
   },
 }

@@ -68,7 +68,7 @@ export default function LandingPage() {
       </h1>
 
       <p className="text-dim mt-4" style={{ maxWidth: '42ch', margin: '1rem auto 0' }}>
-        Anonboard gives you a unique code instead of an account. Keep it safe — it&apos;s
+        GetNyash gives you a unique code instead of an account. Keep it safe — it&apos;s
         the only way back in. No email. No password. No profile.
       </p>
 
