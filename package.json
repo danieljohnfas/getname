@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "pages:build": "opennextjs-cloudflare build",
+    "pages:build": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
     "pages:preview": "npm run pages:build && wrangler pages dev",
     "pages:deploy": "npm run pages:build && wrangler deploy",
     "db:generate": "drizzle-kit generate",
