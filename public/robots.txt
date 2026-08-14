@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Allow: /terms
+Allow: /onboarding
+Allow: /login
+Disallow: /general
+Disallow: /spaces
+Disallow: /api/
+
+Sitemap: https://getnyash.com/sitemap.xml
