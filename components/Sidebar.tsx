@@ -81,15 +81,7 @@ export function Sidebar() {
         Sign out
       </button>
 
-      <a
-        href="https://anonboard.app"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="sidebar-powered-by"
-        title="Built with Anonboard — anonymous discussions, no accounts"
-      >
-        ⌁ powered by Anonboard
-      </a>
+
     </aside>
   )
 }
